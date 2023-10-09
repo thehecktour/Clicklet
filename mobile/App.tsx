@@ -1,11 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function App() {
+
+  const [pound, setPound] = useState('');
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <Text>Weight Converter</Text>
+      <Text>Pounds: </Text>
+      <TextInput
+        keyboardType='numeric'
+        placeholder='Enter a number'
+        value={pound}
+        onChangeText={(e)=> setPound(e)}
+      />
+      <Text>Your weight in kg is:</Text>
     </View>
   );
 }
