@@ -1,14 +1,11 @@
 const axios = require('axios');
-const readline = require('readline');
-const XLSX = require('xlsx');
+const fs = require('fs');
 
-// Configuração do readline para receber o CNPJ
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
 
-// Função para buscar o CNPJ na API
+const arquivoEntrada = 'cnpjs.txt'; 
+const arquivoSaida = 'dados_cnpj.txt';
+
+
 async function buscarCNPJ(cnpj) {
   const url = `https://receitaws.com.br/v1/cnpj/${cnpj}`;
   
@@ -16,65 +13,71 @@ async function buscarCNPJ(cnpj) {
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar o CNPJ:', error);
+    console.error(`Erro ao buscar o CNPJ ${cnpj}:`, error.message);
     return null;
   }
 }
 
-// Função para salvar os dados no formato XLSX
-function salvarXLSX(dados) {
-  // Organiza os dados em formato adequado para as colunas
-  const ws_data = [];
-  
-  // 1ª Linha com os títulos dos campos
-  const campos = Object.keys(dados);
-  ws_data.push(campos);
 
-  // 2ª Linha com os valores correspondentes a cada campo
-  const valores = campos.map(campo => {
-    if (typeof dados[campo] === 'object' && !Array.isArray(dados[campo])) {
-      return JSON.stringify(dados[campo]); // Caso o campo seja um objeto
-    } else if (Array.isArray(dados[campo])) {
-      return dados[campo].map(item => item.text).join(', '); // Caso o campo seja uma lista
-    }
-    return dados[campo]; // Caso o campo seja simples
-  });
+function salvarTXT(dados) {
+  const socios = dados.qsa
+    ? dados.qsa.map(socio => `${socio.nome} - ${socio.qual}`).join('; ')
+    : 'Não informado';
 
-  ws_data.push(valores);
+  const dadosFormatados = `
+===============================
+CNPJ: ${dados.cnpj}
+Nome: ${dados.nome}
+Fantasia: ${dados.fantasia || 'Não informado'}
+Atividade Principal: ${dados.atividade_principal.map(a => a.text).join(', ')}
+Situação: ${dados.situacao}
+Abertura: ${dados.abertura}
+Telefone: ${dados.telefone}
+Email: ${dados.email || 'Não informado'}
+Endereço: ${dados.logradouro}, ${dados.numero}, ${dados.bairro} - ${dados.municipio}/${dados.uf}
+Capital Social: R$ ${dados.capital_social || 'Não informado'}
+Quadro de Sócios: ${socios}
+===============================\n`;
 
-  // Cria a planilha
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Dados CNPJ');
-
-  // Salva o arquivo XLSX
-  XLSX.writeFile(wb, 'dados_cnpj.xlsx');
-  console.log('Arquivo XLSX gerado com sucesso!');
+  fs.appendFileSync(arquivoSaida, dadosFormatados, 'utf8');
+  console.log(`Dados do CNPJ ${dados.cnpj} salvos no arquivo.`);
 }
 
-// Função principal
-async function main() {
-  rl.question('Digite o CNPJ (somente números): ', async (cnpj) => {
-    const cnpjFormatado = cnpj.replace(/\D/g, '');  // Remove qualquer caractere não numérico
 
-    if (cnpjFormatado.length !== 14) {
-      console.log('CNPJ inválido! Deve ter 14 dígitos.');
-      rl.close();
-      return;
-    }
+async function processarCNPJs() {
+  if (!fs.existsSync(arquivoEntrada)) {
+    console.log(`Arquivo ${arquivoEntrada} não encontrado.`);
+    return;
+  }
 
-    console.log('Buscando informações do CNPJ...');
-    const dadosCNPJ = await buscarCNPJ(cnpjFormatado);
+  const cnpjs = fs.readFileSync(arquivoEntrada, 'utf8')
+    .split('\n')
+    .map(cnpj => cnpj.replace(/\D/g, '').trim())
+    .filter(cnpj => cnpj.length === 14);
+
+  if (cnpjs.length === 0) {
+    console.log('Nenhum CNPJ válido encontrado no arquivo.');
+    return;
+  }
+
+  console.log(`Iniciando busca para ${cnpjs.length} CNPJs...`);
+
+  for (const cnpj of cnpjs) {
+    console.log(`Buscando informações do CNPJ: ${cnpj}...`);
+    const dadosCNPJ = await buscarCNPJ(cnpj);
 
     if (dadosCNPJ && dadosCNPJ.status === 'OK') {
-      console.log('Dados encontrados. Gerando arquivo XLSX...');
-      salvarXLSX(dadosCNPJ);
+      salvarTXT(dadosCNPJ);
     } else {
-      console.log('Não foi possível encontrar dados para este CNPJ.');
+      console.log(`Não foi possível encontrar dados para o CNPJ: ${cnpj}`);
     }
 
-    rl.close();
-  });
+    console.log('Aguardando 2 segundos antes da próxima busca...\n');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  console.log('Processamento concluído.');
 }
 
-main();
+
+processarCNPJs();
