@@ -48,4 +48,4 @@ class Clicklet extends HTMLElement {
     }
 }
 
-customElements.define("clicklet-button", Clicklet);
+customElements.define("clicklet", Clicklet);
