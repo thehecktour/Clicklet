@@ -1,16 +1,21 @@
 {
     "name": "clicklet",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "The funniest button you'll ever meet! 🤪",
     "main": "index.js",
     "module": "index.js",
     "type": "module",
     "files": [
-      "index.js",
-      "src"
+        "index.js",
+        "src"
     ],
-    "keywords": ["web component", "button", "custom element", "js", "component"],
+    "keywords": [
+        "web component",
+        "button",
+        "custom element",
+        "js",
+        "component"
+    ],
     "author": "Hector",
     "license": "MIT"
-  }
-  
+}
