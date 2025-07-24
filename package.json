@@ -1,0 +1,16 @@
+{
+    "name": "clicklet",
+    "version": "1.0.0",
+    "description": "A customizable web component button",
+    "main": "index.js",
+    "module": "index.js",
+    "type": "module",
+    "files": [
+      "index.js",
+      "src"
+    ],
+    "keywords": ["web component", "button", "custom element", "js", "component"],
+    "author": "Hector",
+    "license": "MIT"
+  }
+  
