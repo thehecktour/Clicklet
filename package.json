@@ -1,7 +1,7 @@
 {
     "name": "clicklet",
     "version": "1.0.0",
-    "description": "A customizable web component button",
+    "description": "The funniest button you'll ever meet! 🤪",
     "main": "index.js",
     "module": "index.js",
     "type": "module",
